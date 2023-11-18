@@ -1,7 +1,6 @@
 package bencode
 
 import (
-	"fmt"
 	"net/url"
 	"strconv"
 )
@@ -16,7 +15,6 @@ type TorrentFile struct {
 }
 
 func (t *TorrentFile) BuildTrackerURL(peerID [20]byte, port uint16) (string, error) {
-	fmt.Println(t.Announce)
 	base, err := url.Parse(t.Announce)
 	if err != nil {
 		return "", err
@@ -32,10 +30,6 @@ func (t *TorrentFile) BuildTrackerURL(peerID [20]byte, port uint16) (string, err
 		"left":       []string{strconv.Itoa(t.Length)},
 	}
 	base.RawQuery = params.Encode()
-
-	hexString := fmt.Sprintf("%x", t.InfoHash)
-
-	fmt.Println("HEX:", hexString)
 
 	return base.String(), nil
 }

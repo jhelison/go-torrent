@@ -1,4 +1,4 @@
-package p2p
+package peers
 
 import (
 	"encoding/binary"
@@ -32,4 +32,8 @@ func Unmarshal(peersBin []byte) ([]Peer, error) {
 	}
 
 	return peers, nil
+}
+
+func (p Peer) String() string {
+	return fmt.Sprintf("%s:%v", p.IP.String(), p.Port)
 }
