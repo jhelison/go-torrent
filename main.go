@@ -4,13 +4,12 @@ import (
 	"crypto/rand"
 	"fmt"
 	"go-torrent/bencode"
-	p2p "go-torrent/peers"
+	"go-torrent/p2p"
+	"go-torrent/peers"
 	"io"
 	"log"
-	"net"
 	"net/http"
 	"os"
-	"time"
 )
 
 func main() {
@@ -58,20 +57,24 @@ func main() {
 		panic(err)
 	}
 
-	peers, err := p2p.Unmarshal([]byte(res.Peers))
+	peers, err := peers.Unmarshal([]byte(res.Peers))
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println(peers)
 
-	for _, peer := range peers {
-		conn, err := net.DialTimeout("tcp", peer.String(), 3*time.Second)
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		fmt.Println(conn)
+	torrenT := p2p.Torrent{
+		Peers:       peers,
+		PeerID:      randomBytes,
+		InfoHash:    torrentFile.InfoHash,
+		PieceHashes: torrentFile.PieceHashes,
+		PieceLenght: torrentFile.PieceLength,
+		Length:      torrentFile.Length,
+		Name:        torrentFile.Name,
 	}
+
+	torrenT.Download()
+
 }
 
 func get(url string) (io.ReadCloser, error) {

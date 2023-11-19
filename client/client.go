@@ -20,11 +20,11 @@ type Client struct {
 	Choked   bool
 	Bitfield bitfield.Bitfield
 	peer     peers.Peer
-	infoHash peers.InfoHash
+	infoHash peers.Hash
 	peerID   peers.PeerID
 }
 
-func New(peer peers.Peer, peerID peers.PeerID, infoHash peers.InfoHash) (*Client, error) {
+func New(peer peers.Peer, peerID peers.PeerID, infoHash peers.Hash) (*Client, error) {
 	conn, err := net.DialTimeout("tcp", peer.String(), TimoutTime)
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func New(peer peers.Peer, peerID peers.PeerID, infoHash peers.InfoHash) (*Client
 	}, nil
 }
 
-func completeHandshake(conn net.Conn, peerID peers.PeerID, infoHash peers.InfoHash) (*peers.Handshake, error) {
+func completeHandshake(conn net.Conn, peerID peers.PeerID, infoHash peers.Hash) (*peers.Handshake, error) {
 	conn.SetDeadline(time.Now().Add(TimoutTime))
 	// Disable the deadline at the end
 	defer conn.SetDeadline(time.Time{})

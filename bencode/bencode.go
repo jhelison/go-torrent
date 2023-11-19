@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"fmt"
+	"go-torrent/peers"
 	"io"
 
 	"github.com/jackpal/bencode-go"
@@ -61,19 +62,19 @@ func (bi bencodeInfo) hash() ([20]byte, error) {
 	return sha1.Sum(bencodedInfo.Bytes()), nil
 }
 
-func (bi bencodeInfo) splitPieceHashes() ([][20]byte, error) {
+func (bi bencodeInfo) splitPieceHashes() ([]peers.Hash, error) {
 	// Calculate the pieces hashes
 	piecesBytes := []byte(bi.Pieces)
 
 	// Ensure that the length of piecesBytes is a multiple of 20
 	if len(piecesBytes)%20 != 0 {
-		return [][20]byte{}, fmt.Errorf("invalid piece length")
+		return []peers.Hash{}, fmt.Errorf("invalid piece length")
 	}
 
 	// number of pieces
 	nPieces := len(piecesBytes) / 20
 
-	pieceHashes := make([][20]byte, nPieces)
+	pieceHashes := make([]peers.Hash, nPieces)
 
 	for i := 0; i < nPieces; i++ {
 		var hash [20]byte

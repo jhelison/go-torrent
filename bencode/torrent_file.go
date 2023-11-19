@@ -1,6 +1,7 @@
 package bencode
 
 import (
+	"go-torrent/peers"
 	"net/url"
 	"strconv"
 )
@@ -8,7 +9,7 @@ import (
 type TorrentFile struct {
 	Announce    string
 	InfoHash    [20]byte
-	PieceHashes [][20]byte
+	PieceHashes []peers.Hash
 	PieceLength int
 	Length      int
 	Name        string

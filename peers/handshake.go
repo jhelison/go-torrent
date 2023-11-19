@@ -1,17 +1,20 @@
 package peers
 
-import "io"
+import (
+	"fmt"
+	"io"
+)
 
-type InfoHash [20]byte
+type Hash [20]byte
 type PeerID [20]byte
 
 type Handshake struct {
 	Pstr     string
-	InfoHash InfoHash
+	InfoHash Hash
 	PeerID   PeerID
 }
 
-func NewHandshake(peerID PeerID, infoHash InfoHash) *Handshake {
+func NewHandshake(peerID PeerID, infoHash Hash) *Handshake {
 	return &Handshake{
 		Pstr:     "BitTorrent protocol",
 		InfoHash: infoHash,
@@ -45,7 +48,34 @@ func (h Handshake) Serialize() []byte {
 }
 
 func ReadHandshake(r io.Reader) (*Handshake, error) {
-	// TODO: Implement me
+	lengthBuf := make([]byte, 1)
+	_, err := io.ReadFull(r, lengthBuf)
+	if err != nil {
+		return nil, err
+	}
+	pstrlen := int(lengthBuf[0])
 
-	return nil, nil
+	if pstrlen == 0 {
+		err := fmt.Errorf("pstrlen cannot be 0")
+		return nil, err
+	}
+
+	handshakeBuf := make([]byte, 48+pstrlen)
+	_, err = io.ReadFull(r, handshakeBuf)
+	if err != nil {
+		return nil, err
+	}
+
+	var infoHash, peerID [20]byte
+
+	copy(infoHash[:], handshakeBuf[pstrlen+8:pstrlen+8+20])
+	copy(peerID[:], handshakeBuf[pstrlen+8+20:])
+
+	h := Handshake{
+		Pstr:     string(handshakeBuf[0:pstrlen]),
+		InfoHash: infoHash,
+		PeerID:   peerID,
+	}
+
+	return &h, nil
 }
