@@ -53,13 +53,16 @@ func New(peer peers.Peer, peerID peers.PeerID, infoHash peers.Hash) (*Client, er
 }
 
 func completeHandshake(conn net.Conn, peerID peers.PeerID, infoHash peers.Hash) (*peers.Handshake, error) {
-	conn.SetDeadline(time.Now().Add(TimoutTime))
+	err := conn.SetDeadline(time.Now().Add(TimoutTime))
+	if err != nil {
+		return nil, err
+	}
 	// Disable the deadline at the end
 	defer conn.SetDeadline(time.Time{})
 
 	// Do the handshake
 	handshake := peers.NewHandshake(peerID, infoHash)
-	_, err := conn.Write(handshake.Serialize())
+	_, err = conn.Write(handshake.Serialize())
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +80,10 @@ func completeHandshake(conn net.Conn, peerID peers.PeerID, infoHash peers.Hash) 
 }
 
 func recieveBitfield(conn net.Conn) (bitfield.Bitfield, error) {
-	conn.SetDeadline(time.Now().Add(TimoutTimeBig))
+	err := conn.SetDeadline(time.Now().Add(TimoutTimeBig))
+	if err != nil {
+		return nil, err
+	}
 	defer conn.SetDeadline(time.Time{})
 
 	msg, err := message.Read(conn)
@@ -85,10 +91,10 @@ func recieveBitfield(conn net.Conn) (bitfield.Bitfield, error) {
 		return nil, err
 	}
 	if msg == nil {
-		return nil, fmt.Errorf("expected bitfield but got %s", msg)
+		return nil, fmt.Errorf("expected bitfield but got %v", msg)
 	}
 	if msg.ID != message.MsgBitfield {
-		return nil, fmt.Errorf("expected bitfield but got %s", msg)
+		return nil, fmt.Errorf("expected bitfield but got %v", msg)
 	}
 
 	return msg.Payload, nil

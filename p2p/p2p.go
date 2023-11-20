@@ -88,7 +88,10 @@ func downloadPiece(client *client.Client, work *pieceWork) ([]byte, error) {
 	}
 
 	// Set a deadline to skip stucked peers
-	client.Conn.SetDeadline(time.Now().Add(DownloadDeadline))
+	err := client.Conn.SetDeadline(time.Now().Add(DownloadDeadline))
+	if err != nil {
+		return nil, err
+	}
 	defer client.Conn.SetDeadline(time.Time{})
 
 	for state.downloaded < work.length {
@@ -128,8 +131,14 @@ func (t *Torrent) startDownloadWorker(peer peers.Peer, workQueue chan *pieceWork
 	defer client.Conn.Close()
 	log.Printf("Handshake complete with peer %s\n", peer)
 
-	client.SendUnchoke()
-	client.SendInterested()
+	err = client.SendUnchoke()
+	if err != nil {
+		return err
+	}
+	err = client.SendInterested()
+	if err != nil {
+		return err
+	}
 
 	for work := range workQueue {
 		if !client.Bitfield.HasPiece(work.index) {
@@ -149,7 +158,10 @@ func (t *Torrent) startDownloadWorker(peer peers.Peer, workQueue chan *pieceWork
 			log.Println("integrity validation failed", work.index)
 		}
 
-		client.SendHave(work.index)
+		err = client.SendHave(work.index)
+		if err != nil {
+			log.Println("sending have failed", err)
+		}
 		results <- &pieceResult{
 			index: work.index,
 			buf:   buf,
@@ -162,7 +174,7 @@ func (t *Torrent) startDownloadWorker(peer peers.Peer, workQueue chan *pieceWork
 func checkWorkHash(work *pieceWork, buf []byte) error {
 	hash := sha1.Sum(buf)
 	if !bytes.Equal(hash[:], work.hash[:]) {
-		return fmt.Errorf("failed checking integirty for", work.index)
+		return fmt.Errorf("failed checking integirty for %v", work.index)
 	}
 
 	return nil

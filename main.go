@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	file, err := os.Open("/home/korok/personal/go-torrent/debian-edu-12.2.0-amd64-netinst.iso.torrent")
+	file, err := os.Open("./debian-edu-12.2.0-amd64-netinst.iso.torrent")
 	if err != nil {
 		fmt.Println("Error opening file:", err)
 		return
@@ -73,7 +73,10 @@ func main() {
 		Name:        torrentFile.Name,
 	}
 
-	torrenT.Download()
+	_, err = torrenT.Download()
+	if err != nil {
+		panic(err)
+	}
 
 }
 
