@@ -58,7 +58,8 @@ func completeHandshake(conn net.Conn, peerID peers.PeerID, infoHash peers.Hash) 
 		return nil, err
 	}
 	// Disable the deadline at the end
-	defer conn.SetDeadline(time.Time{})
+	// We can ignore the error
+	defer conn.SetDeadline(time.Time{}) //nolint:errcheck
 
 	// Do the handshake
 	handshake := peers.NewHandshake(peerID, infoHash)
@@ -84,7 +85,8 @@ func recieveBitfield(conn net.Conn) (bitfield.Bitfield, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer conn.SetDeadline(time.Time{})
+	// We can ignore the error for this line
+	defer conn.SetDeadline(time.Time{}) //nolint:errcheck
 
 	msg, err := message.Read(conn)
 	if err != nil {

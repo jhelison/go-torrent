@@ -92,7 +92,8 @@ func downloadPiece(client *client.Client, work *pieceWork) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer client.Conn.SetDeadline(time.Time{})
+	// We can ignore the error on the defer
+	defer client.Conn.SetDeadline(time.Time{}) //nolint:errcheck
 
 	for state.downloaded < work.length {
 		// If unchoked download requests
@@ -196,7 +197,9 @@ func (t *Torrent) Download() ([]byte, error) {
 
 	// Start the workers
 	for _, peer := range t.Peers {
-		go t.startDownloadWorker(peer, workQueue, results)
+		// Errors are expected when downloading for peers
+		// We can ignore them on lint
+		go t.startDownloadWorker(peer, workQueue, results) //nolint:errcheck
 	}
 
 	// Collect results
