@@ -5,17 +5,21 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"go-torrent/client"
+	"go-torrent/logger"
 	"go-torrent/message"
 	"go-torrent/peers"
-	"log"
 	"runtime"
 	"time"
 )
 
 var (
+	// Client configurations
 	DownloadDeadline = 30 * time.Second
 	MaxBacklog       = 5
 	MaxBlockSize     = 16384
+
+	// Default logger
+	log = logger.GetLogger()
 )
 
 type Torrent struct {
@@ -130,7 +134,7 @@ func (t *Torrent) startDownloadWorker(peer peers.Peer, workQueue chan *pieceWork
 		return err
 	}
 	defer client.Conn.Close()
-	log.Printf("Handshake complete with peer %s\n", peer)
+	log.Info().Msgf("Handshake complete with peer %s\n", peer)
 
 	err = client.SendUnchoke()
 	if err != nil {
@@ -149,19 +153,19 @@ func (t *Torrent) startDownloadWorker(peer peers.Peer, workQueue chan *pieceWork
 
 		buf, err := downloadPiece(client, work)
 		if err != nil {
-			log.Println("error downloading piece", err)
+			log.Error().Msgf("error downloading piece", err)
 			workQueue <- work
 			continue
 		}
 
 		err = checkWorkHash(work, buf)
 		if err != nil {
-			log.Println("integrity validation failed", work.index)
+			log.Error().Msgf("integrity validation failed", work.index)
 		}
 
 		err = client.SendHave(work.index)
 		if err != nil {
-			log.Println("sending have failed", err)
+			log.Error().Msgf("sending have failed", err)
 		}
 		results <- &pieceResult{
 			index: work.index,
@@ -182,7 +186,7 @@ func checkWorkHash(work *pieceWork, buf []byte) error {
 }
 
 func (t *Torrent) Download() ([]byte, error) {
-	log.Println("Starting download")
+	log.Info().Msgf("Starting download")
 
 	workQueue := make(chan *pieceWork, len(t.PieceHashes))
 	results := make(chan *pieceResult)
@@ -213,7 +217,7 @@ func (t *Torrent) Download() ([]byte, error) {
 
 		percent := float64(donePieces) / float64(len(t.PieceHashes)) * 100
 		numWorkers := runtime.NumGoroutine() - 1 // subtract 1 for main thread
-		log.Printf("(%0.2f%%) Downloaded piece #%d from %d peers\n", percent, res.index, numWorkers)
+		log.Info().Msgf("(%0.2f%%) Downloaded piece #%d from %d peers\n", percent, res.index, numWorkers)
 	}
 
 	close(workQueue)
