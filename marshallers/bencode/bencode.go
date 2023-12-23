@@ -10,6 +10,11 @@ import (
 	"github.com/jackpal/bencode-go"
 )
 
+type bencodeTorrent struct {
+	Announce string      `bencode:"announce"`
+	Info     bencodeInfo `bencode:"info"`
+}
+
 type bencodeInfo struct {
 	Pieces       string `bencode:"pieces"`
 	PiecesLength int    `bencode:"piece length"`
@@ -17,12 +22,8 @@ type bencodeInfo struct {
 	Name         string `bencode:"name"`
 }
 
-type bencodeTorrent struct {
-	Announce string      `bencode:"announce"`
-	Info     bencodeInfo `bencode:"info"`
-}
-
-func Open(r io.Reader) (*bencodeTorrent, error) {
+// Unmarshal reads a stream and translates into bencode torrent
+func Unmarshal(r io.Reader) (*bencodeTorrent, error) {
 	becodeT := bencodeTorrent{}
 	err := bencode.Unmarshal(r, &becodeT)
 	if err != nil {

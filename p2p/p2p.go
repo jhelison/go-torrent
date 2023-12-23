@@ -14,7 +14,7 @@ import (
 
 var (
 	// Client configurations
-	DownloadDeadline = 30 * time.Second
+	DownloadDeadline = 5 * time.Second
 	MaxBacklog       = 5
 	MaxBlockSize     = 16384
 
@@ -91,7 +91,7 @@ func downloadPiece(client *client.Client, work *pieceWork) ([]byte, error) {
 		buf:    make([]byte, work.length),
 	}
 
-	// Set a deadline to skip stucked peers
+	// Set a deadline to skip stuck peers
 	err := client.Conn.SetDeadline(time.Now().Add(DownloadDeadline))
 	if err != nil {
 		return nil, err
@@ -128,52 +128,77 @@ func downloadPiece(client *client.Client, work *pieceWork) ([]byte, error) {
 	return state.buf, nil
 }
 
-func (t *Torrent) startDownloadWorker(peer peers.Peer, workQueue chan *pieceWork, results chan *pieceResult) error {
+// startDownloadWorker start a new worker to download a piece from a peer
+func (t *Torrent) startDownloadWorker(peer peers.Peer, workQueue chan *pieceWork, results chan *pieceResult) {
+	// Create a new client for the peer
 	client, err := client.New(peer, t.PeerID, t.InfoHash)
 	if err != nil {
-		return err
+		log.Warn().Msgf("failed to start handshake with peer %s, err: %s", peer, err)
+		return
 	}
 	defer client.Conn.Close()
-	log.Info().Msgf("Handshake complete with peer %s\n", peer)
 
+	log.Info().Msgf("Handshake complete with peer %s", peer)
+
+	// Send unchoke
 	err = client.SendUnchoke()
 	if err != nil {
-		return err
+		log.Warn().Msgf("failed to send unchoke to peer %s, err: %s", peer, err)
+		return
 	}
+
+	// Send that the client is interested
 	err = client.SendInterested()
 	if err != nil {
-		return err
+		log.Warn().Msgf("failed to send interested to peer %s, err: %s", peer, err)
+		return
 	}
 
+	// TODO: Turn this into a env var
+	// Count of retries for the peer
+	retries := 0
 	for work := range workQueue {
+		// Check if we have reached max retries
+		if retries >= 30 {
+			workQueue <- work
+			log.Warn().Msgf("max retries reached for peer %s", peer)
+			return
+		}
+
+		// Check if worker has piece
 		if !client.Bitfield.HasPiece(work.index) {
+			log.Trace().Msgf("piece %s not found on peer %s", work.hash, peer)
 			workQueue <- work
 			continue
 		}
 
+		// Download piece from peers
 		buf, err := downloadPiece(client, work)
 		if err != nil {
-			log.Error().Msgf("error downloading piece", err)
+			log.Warn().Msgf("error downloading piece with peer %s, err: %s", peer, err)
 			workQueue <- work
+			retries++
 			continue
 		}
 
+		// Check the integrity
 		err = checkWorkHash(work, buf)
 		if err != nil {
-			log.Error().Msgf("integrity validation failed", work.index)
+			log.Warn().Msgf("integrity validation failed, invalid index: %v", work.index)
 		}
 
+		// Send that now we have that piece
 		err = client.SendHave(work.index)
 		if err != nil {
-			log.Error().Msgf("sending have failed", err)
+			log.Warn().Msgf("sending has failed, err: %s", err)
 		}
+
+		// Append the downloaded piece to the results
 		results <- &pieceResult{
 			index: work.index,
 			buf:   buf,
 		}
 	}
-
-	return nil
 }
 
 func checkWorkHash(work *pieceWork, buf []byte) error {
@@ -186,7 +211,8 @@ func checkWorkHash(work *pieceWork, buf []byte) error {
 }
 
 func (t *Torrent) Download() ([]byte, error) {
-	log.Info().Msgf("Starting download")
+	log.Info().Msg("Starting download")
+	log.Info().Msgf("Total available peers: %v", len(t.Peers))
 
 	workQueue := make(chan *pieceWork, len(t.PieceHashes))
 	results := make(chan *pieceResult)
@@ -217,7 +243,8 @@ func (t *Torrent) Download() ([]byte, error) {
 
 		percent := float64(donePieces) / float64(len(t.PieceHashes)) * 100
 		numWorkers := runtime.NumGoroutine() - 1 // subtract 1 for main thread
-		log.Info().Msgf("(%0.2f%%) Downloaded piece #%d from %d peers\n", percent, res.index, numWorkers)
+		missingPieces := len(t.PieceHashes) - donePieces
+		log.Info().Msgf("(%0.2f%%) Downloaded piece #%d from %d peers, missing %v from %v pieces", percent, res.index, numWorkers, missingPieces, len(t.PieceHashes))
 	}
 
 	close(workQueue)

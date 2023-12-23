@@ -3,13 +3,15 @@ package main
 import (
 	"crypto/rand"
 	"fmt"
-	"go-torrent/bencode"
-	"go-torrent/p2p"
-	"go-torrent/peers"
 	"io"
 	"log"
 	"net/http"
 	"os"
+
+	"go-torrent/marshallers/bencode"
+	bencoderesponse "go-torrent/marshallers/bencode_response"
+	"go-torrent/p2p"
+	"go-torrent/peers"
 )
 
 func main() {
@@ -20,7 +22,7 @@ func main() {
 	}
 	defer file.Close()
 
-	torrent, err := bencode.Open(file)
+	torrent, err := bencode.Unmarshal(file)
 	if err != nil {
 		fmt.Println("Error decoding file:", err)
 	}
@@ -30,7 +32,7 @@ func main() {
 		fmt.Println("Error converting torrent file:", err)
 	}
 
-	fmt.Println(torrentFile.InfoHash)
+	// fmt.Println(torrentFile.InfoHash)
 
 	var randomBytes [20]byte
 	_, err = rand.Read(randomBytes[:])
@@ -39,7 +41,7 @@ func main() {
 		log.Fatalf("Failed to generate random bytes: %v", err)
 	}
 
-	fmt.Println(torrentFile.BuildTrackerURL(randomBytes, 6881))
+	// fmt.Println(torrentFile.BuildTrackerURL(randomBytes, 6881))
 
 	url, err := torrentFile.BuildTrackerURL(randomBytes, 6881)
 	if err != nil {
@@ -52,7 +54,7 @@ func main() {
 		log.Fatalf("Failed to HTTP get bytes: %v", err)
 	}
 
-	res, err := bencode.Unmarshal(body)
+	res, err := bencoderesponse.Unmarshal(body)
 	if err != nil {
 		panic(err)
 	}
@@ -61,7 +63,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(peers)
+	// fmt.Println(peers)
 
 	torrenT := p2p.Torrent{
 		Peers:       peers,

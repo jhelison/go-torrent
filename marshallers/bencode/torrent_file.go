@@ -6,6 +6,8 @@ import (
 	"strconv"
 )
 
+// TorrentFile stores the basic information to handle processing
+// and download of torrents
 type TorrentFile struct {
 	Announce    string
 	InfoHash    [20]byte
@@ -15,6 +17,9 @@ type TorrentFile struct {
 	Name        string
 }
 
+// BuildTrackerURL takes the TorrentFile and build the tracker URL with params
+// Example can be found on https://wiki.theory.org/BitTorrent_Tracker_Protocol
+// For this implementation we are always passing as no parts have been downloaded yet
 func (t *TorrentFile) BuildTrackerURL(peerID [20]byte, port uint16) (string, error) {
 	base, err := url.Parse(t.Announce)
 	if err != nil {
