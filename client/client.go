@@ -21,6 +21,8 @@ type Client struct {
 	Choked   bool
 	Bitfield Bitfield
 	peer     peer.Peer
+	banned   bool
+	retries  int
 	infoHash handshake.Hash
 	peerID   handshake.PeerID
 }
@@ -55,6 +57,7 @@ func NewClient(
 	return &Client{
 		Conn:     conn,
 		Choked:   true,
+		banned:   false,
 		Bitfield: bf,
 		peer:     peer,
 		infoHash: infoHash,

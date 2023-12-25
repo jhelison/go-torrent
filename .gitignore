@@ -4,3 +4,8 @@ coverage.txt
 
 # Build
 build
+
+# Vscode
+.vscode
+
+*.iso

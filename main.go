@@ -75,7 +75,7 @@ func main() {
 		Name:        torrentFile.Name,
 	}
 
-	_, err = torrenT.Download()
+	err = torrenT.Download()
 	if err != nil {
 		panic(err)
 	}
