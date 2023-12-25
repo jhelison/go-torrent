@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"os"
 
+	"go-torrent/client"
 	"go-torrent/marshallers/bencode"
 	bencoderesponse "go-torrent/marshallers/bencode_response"
-	"go-torrent/p2p"
-	"go-torrent/peers"
+	"go-torrent/marshallers/peer"
 )
 
 func main() {
@@ -59,18 +59,18 @@ func main() {
 		panic(err)
 	}
 
-	peers, err := peers.Unmarshal([]byte(res.Peers))
+	peers, err := peer.Unmarshal([]byte(res.Peers))
 	if err != nil {
 		panic(err)
 	}
 	// fmt.Println(peers)
 
-	torrenT := p2p.Torrent{
+	torrenT := client.Torrent{
 		Peers:       peers,
 		PeerID:      randomBytes,
 		InfoHash:    torrentFile.InfoHash,
 		PieceHashes: torrentFile.PieceHashes,
-		PieceLenght: torrentFile.PieceLength,
+		PieceLength: torrentFile.PieceLength,
 		Length:      torrentFile.Length,
 		Name:        torrentFile.Name,
 	}

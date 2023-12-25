@@ -1,15 +1,16 @@
-package p2p
+package client
 
 import (
 	"bytes"
 	"crypto/sha1"
 	"fmt"
-	"go-torrent/client"
-	"go-torrent/logger"
-	"go-torrent/message"
-	"go-torrent/peers"
 	"runtime"
 	"time"
+
+	"go-torrent/logger"
+	"go-torrent/marshallers/handshake"
+	"go-torrent/marshallers/message"
+	"go-torrent/marshallers/peer"
 )
 
 var (
@@ -22,58 +23,67 @@ var (
 	log = logger.GetLogger()
 )
 
+// Torrent is the full representation for a torrent with peers and pieces
 type Torrent struct {
-	Peers       []peers.Peer
-	PeerID      peers.PeerID
-	InfoHash    peers.Hash
-	PieceHashes []peers.Hash
-	PieceLenght int
+	Peers       []peer.Peer
+	PeerID      handshake.PeerID
+	InfoHash    handshake.Hash
+	PieceHashes []handshake.Hash
+	PieceLength int
 	Length      int
 	Name        string
 }
 
+// pieceWork is a single work from a piece
 type pieceWork struct {
 	index  int
-	hash   peers.Hash
+	hash   handshake.Hash
 	length int
 }
 
+// pieceResult if the final result from a piece
 type pieceResult struct {
 	index int
 	buf   []byte
 }
 
+// pieceProgress is the representation of the current progress of a single piece
 type pieceProgress struct {
 	index      int
-	client     *client.Client
+	client     *Client
 	buf        []byte
 	downloaded int
 	requested  int
 	backlog    int
 }
 
+// readMessage reads a message and update the pieceProgress state
 func (state *pieceProgress) readMessage() error {
+	// Read a message from the client
 	msg, err := state.client.Read()
 	if err != nil {
 		return err
 	}
-
 	if msg == nil {
 		return nil
 	}
 
+	// Update the state based on the message id
 	switch msg.ID {
 	case message.MsgUnchoke:
 		state.client.Choked = false
 	case message.MsgChoke:
 		state.client.Choked = true
 	case message.MsgHave:
+		// If the message is have we parse it and update the bitfield with the index
 		index, err := message.ParseHave(msg)
 		if err != nil {
 			return err
 		}
 		state.client.Bitfield.SetPiece(index)
 	case message.MsgPiece:
+		// If we have a piece message we parse if and update the state with
+		// a new download complete and a smaller backlog
 		n, err := message.ParsePiece(state.index, state.buf, msg)
 		if err != nil {
 			return err
@@ -84,7 +94,8 @@ func (state *pieceProgress) readMessage() error {
 	return nil
 }
 
-func downloadPiece(client *client.Client, work *pieceWork) ([]byte, error) {
+// downloadPiece download a piece from a peer
+func downloadPiece(client *Client, work *pieceWork) ([]byte, error) {
 	state := pieceProgress{
 		index:  work.index,
 		client: client,
@@ -102,6 +113,7 @@ func downloadPiece(client *client.Client, work *pieceWork) ([]byte, error) {
 	for state.downloaded < work.length {
 		// If unchoked download requests
 		if !state.client.Choked {
+			// We can open request messages until we reach the max backlog
 			for state.backlog < MaxBacklog && state.requested < work.length {
 				blockSize := MaxBlockSize
 				// Last block may be shorter
@@ -109,6 +121,7 @@ func downloadPiece(client *client.Client, work *pieceWork) ([]byte, error) {
 					blockSize = work.length - state.requested
 				}
 
+				// Request and create a new backlog
 				err := client.SendRequest(work.index, state.requested, blockSize)
 				if err != nil {
 					return nil, err
@@ -119,6 +132,8 @@ func downloadPiece(client *client.Client, work *pieceWork) ([]byte, error) {
 			}
 		}
 
+		// Read a message
+		// This can unchoke the client
 		err := state.readMessage()
 		if err != nil {
 			return nil, err
@@ -129,9 +144,9 @@ func downloadPiece(client *client.Client, work *pieceWork) ([]byte, error) {
 }
 
 // startDownloadWorker start a new worker to download a piece from a peer
-func (t *Torrent) startDownloadWorker(peer peers.Peer, workQueue chan *pieceWork, results chan *pieceResult) {
+func (t *Torrent) startDownloadWorker(peer peer.Peer, workQueue chan *pieceWork, results chan *pieceResult) {
 	// Create a new client for the peer
-	client, err := client.New(peer, t.PeerID, t.InfoHash)
+	client, err := NewClient(peer, t.PeerID, t.InfoHash)
 	if err != nil {
 		log.Warn().Msgf("failed to start handshake with peer %s, err: %s", peer, err)
 		return
@@ -201,6 +216,8 @@ func (t *Torrent) startDownloadWorker(peer peers.Peer, workQueue chan *pieceWork
 	}
 }
 
+// checkWorkHash takes a single buf and check it's sha1 hash against
+// expected work hash
 func checkWorkHash(work *pieceWork, buf []byte) error {
 	hash := sha1.Sum(buf)
 	if !bytes.Equal(hash[:], work.hash[:]) {
@@ -210,10 +227,12 @@ func checkWorkHash(work *pieceWork, buf []byte) error {
 	return nil
 }
 
+// Download downloads a torrent
 func (t *Torrent) Download() ([]byte, error) {
 	log.Info().Msg("Starting download")
 	log.Info().Msgf("Total available peers: %v", len(t.Peers))
 
+	// Create a new work queue and result that are shared between peers
 	workQueue := make(chan *pieceWork, len(t.PieceHashes))
 	results := make(chan *pieceResult)
 	for index, hash := range t.PieceHashes {
@@ -225,7 +244,7 @@ func (t *Torrent) Download() ([]byte, error) {
 		}
 	}
 
-	// Start the workers
+	// Start the workers, one per each peer
 	for _, peer := range t.Peers {
 		// Errors are expected when downloading for peers
 		// We can ignore them on lint
@@ -235,12 +254,15 @@ func (t *Torrent) Download() ([]byte, error) {
 	// Collect results
 	buf := make([]byte, t.Length)
 	donePieces := 0
+	// Keep iterating until we are done with the pieces
 	for donePieces < len(t.PieceHashes) {
+		// Take the result, calculate the boundaries and safe on the buf
 		res := <-results
 		begin, end := t.calculateBoundsForPiece(res.index)
 		copy(buf[begin:end], res.buf)
 		donePieces++
 
+		// Log to user
 		percent := float64(donePieces) / float64(len(t.PieceHashes)) * 100
 		numWorkers := runtime.NumGoroutine() - 1 // subtract 1 for main thread
 		missingPieces := len(t.PieceHashes) - donePieces
@@ -249,17 +271,23 @@ func (t *Torrent) Download() ([]byte, error) {
 
 	close(workQueue)
 
+	// Return the final buffer
 	return buf, nil
 }
 
+// calculatedPieceSize calculated a piece size for a index
 func (t Torrent) calculatePieceSize(index int) int {
 	begin, end := t.calculateBoundsForPiece(index)
 	return end - begin
 }
 
+// calculateBoundsForPiece calculates the boundaries for a piece
+// returns a begin and a end
+// The begin is the pieceLength multiplied by the index
+// The end is the begin + the pieceLength with the end as a threshold
 func (t Torrent) calculateBoundsForPiece(index int) (begin int, end int) {
-	begin = index * t.PieceLenght
-	end = begin + t.PieceLenght
+	begin = index * t.PieceLength
+	end = begin + t.PieceLength
 	if end > t.Length {
 		end = t.Length
 	}

@@ -24,3 +24,9 @@ test:
 vulncheck: $(BUILDDIR)/
 	GOBIN=$(BUILDDIR) go install golang.org/x/vuln/cmd/govulncheck@latest
 	$(BUILDDIR)/govulncheck ./...
+
+build: $(BUILDDIR)/
+	go build -o $(BUILDDIR)
+
+install:
+	go install

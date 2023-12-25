@@ -1,9 +1,10 @@
 package bencode
 
 import (
-	"go-torrent/peers"
 	"net/url"
 	"strconv"
+
+	"go-torrent/marshallers/handshake"
 )
 
 // TorrentFile stores the basic information to handle processing
@@ -11,7 +12,7 @@ import (
 type TorrentFile struct {
 	Announce    string
 	InfoHash    [20]byte
-	PieceHashes []peers.Hash
+	PieceHashes []handshake.Hash
 	PieceLength int
 	Length      int
 	Name        string

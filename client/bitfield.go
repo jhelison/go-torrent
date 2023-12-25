@@ -1,4 +1,4 @@
-package bitfield
+package client
 
 type Bitfield []byte
 

@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"go-torrent/marshallers/bencode"
-	"go-torrent/peers"
+	"go-torrent/marshallers/handshake"
 )
 
 // TestBuildTrackerURL tests the BuildTrackerURL
@@ -21,7 +21,7 @@ func TestBuildTrackerURL(t *testing.T) {
 			torrentFile: bencode.TorrentFile{
 				Announce:    "http://torrent.test.org:6969/announce",
 				InfoHash:    [20]byte{},
-				PieceHashes: []peers.Hash{},
+				PieceHashes: []handshake.Hash{},
 				PieceLength: 0,
 				Length:      0,
 				Name:        "test",

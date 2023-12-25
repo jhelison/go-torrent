@@ -1,4 +1,4 @@
-package peers
+package peer
 
 import (
 	"encoding/binary"
@@ -34,6 +34,7 @@ func Unmarshal(peersBytes []byte) ([]Peer, error) {
 	return peers, nil
 }
 
+// String returns a string representation for the Peer object
 func (p Peer) String() string {
 	return fmt.Sprintf("%s:%v", p.IP.String(), p.Port)
 }

@@ -8,23 +8,28 @@ import (
 
 type MessageID uint8
 
+// Types of messages
+// More information can me found on https://wiki.theory.org/BitTorrentSpecification#Messages
 const (
-	MsgChoke          MessageID = 0
-	MsgUnchoke        MessageID = 1
-	MsgInterrested    MessageID = 2
-	MsgNotInterrested MessageID = 3
-	MsgHave           MessageID = 4
-	MsgBitfield       MessageID = 5
-	MsgRequest        MessageID = 6
-	MsgPiece          MessageID = 7
-	MsgCancel         MessageID = 8
+	MsgChoke         MessageID = 0
+	MsgUnchoke       MessageID = 1
+	MsgInterrested   MessageID = 2
+	MsgNotInterested MessageID = 3
+	MsgHave          MessageID = 4
+	MsgBitfield      MessageID = 5
+	MsgRequest       MessageID = 6
+	MsgPiece         MessageID = 7
+	MsgCancel        MessageID = 8
 )
 
+// Message is the structure of a new peer message
+// Formed by the MessageID and a payload
 type Message struct {
 	ID      MessageID
 	Payload []byte
 }
 
+// NewMessage returns a new message
 func NewMessage(ID MessageID, payload []byte) Message {
 	return Message{
 		ID:      ID,
@@ -32,17 +37,26 @@ func NewMessage(ID MessageID, payload []byte) Message {
 	}
 }
 
-func NewRequestMessage(index, begin, legth int) Message {
+// NewRequestMessage build a new request message
+// A request is formed by a index, begin and length
+func NewRequestMessage(index, begin, length int) Message {
+	// Builds a payload for the message
 	payload := make([]byte, 12)
+	// index: integer specifying the zero-based piece index
 	binary.BigEndian.PutUint32(payload[:4], uint32(index))
+	// begin: integer specifying the zero-based byte offset within the piece
 	binary.BigEndian.PutUint32(payload[4:8], uint32(begin))
-	binary.BigEndian.PutUint32(payload[8:], uint32(legth))
+	// length: integer specifying the requested length.
+	binary.BigEndian.PutUint32(payload[8:], uint32(length))
+
 	return NewMessage(
 		MsgRequest,
 		payload,
 	)
 }
 
+// NewHaveMessage builds a message have
+// It accepts a index
 func NewHaveMessage(index int) Message {
 	payload := make([]byte, 4)
 	binary.BigEndian.AppendUint32(payload[:], uint32(index))
@@ -62,7 +76,7 @@ func (m *Message) Serialize() []byte {
 		return make([]byte, 4)
 	}
 
-	// Add the lenght
+	// Add the length
 	length := uint32(len(m.Payload) + 1)
 	buf := make([]byte, 4+length)
 	binary.BigEndian.PutUint32(buf[0:4], length)
@@ -74,7 +88,7 @@ func (m *Message) Serialize() []byte {
 }
 
 // Read generates a message from a steam
-func Read(r io.Reader) (*Message, error) {
+func Unmarshal(r io.Reader) (*Message, error) {
 	lengthBuf := make([]byte, 4)
 	// Reads the first 4 bytes to get the payload lenght
 	_, err := io.ReadFull(r, lengthBuf)
@@ -103,29 +117,39 @@ func Read(r io.Reader) (*Message, error) {
 	return &msg, nil
 }
 
+// ParsePiece parses and validates a piece from a index, buffer and a message
+// Checks for message type, min payload, index, offset
+// returns the
 func ParsePiece(index int, buf []byte, msg *Message) (int, error) {
+	// The id must be Piece
 	if msg.ID != MsgPiece {
 		return 0, fmt.Errorf("Expected PIECE (ID %d), got ID %d", MsgPiece, msg.ID)
 	}
+	// Min payload must be 8 bytes
 	if len(msg.Payload) < 8 {
 		return 0, fmt.Errorf("Payload too short. %d < 8", len(msg.Payload))
 	}
+	// Check if it's the correct index
 	parsedIndex := int(binary.BigEndian.Uint32(msg.Payload[:4]))
 	if parsedIndex != index {
 		return 0, fmt.Errorf("Expected index %d, got %d", index, parsedIndex)
 	}
+	// Check if the the offset is correct
 	begin := int(binary.BigEndian.Uint32(msg.Payload[4:8]))
 	if begin >= len(buf) {
 		return 0, fmt.Errorf("Begin offset too high. %d >= %d", begin, len(buf))
 	}
+	// Check the payload data against the offset and length
 	data := msg.Payload[8:]
 	if begin+len(data) > len(buf) {
 		return 0, fmt.Errorf("Data too long [%d] for offset %d with length %d", len(data), begin, len(buf))
 	}
+	// Writes the buf to the data at offset
 	copy(buf[begin:], data)
 	return len(data), nil
 }
 
+// ParseHave parses a message have, and returns the index
 func ParseHave(msg *Message) (int, error) {
 	if msg.ID != MsgHave {
 		return 0, fmt.Errorf("Expected HAVE (ID %d), got ID %d", MsgHave, msg.ID)
