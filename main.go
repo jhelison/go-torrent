@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 
 	"go-torrent/client"
@@ -15,6 +16,9 @@ import (
 )
 
 func main() {
+	go func() {
+		http.ListenAndServe("localhost:8080", nil)
+	}()
 	file, err := os.Open("./debian-edu-12.2.0-amd64-netinst.iso.torrent")
 	if err != nil {
 		fmt.Println("Error opening file:", err)

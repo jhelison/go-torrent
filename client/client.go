@@ -108,9 +108,6 @@ func recieveBitfield(conn net.Conn) (Bitfield, error) {
 	if err != nil {
 		return nil, err
 	}
-	if msg == nil {
-		return nil, fmt.Errorf("expected bitfield but got %v", msg)
-	}
 	if msg.ID != message.MsgBitfield {
 		return nil, fmt.Errorf("expected bitfield but got %v", msg)
 	}
@@ -119,7 +116,7 @@ func recieveBitfield(conn net.Conn) (Bitfield, error) {
 }
 
 // Read reads the message from the client
-func (c *Client) Read() (*message.Message, error) {
+func (c *Client) Read() (message.Message, error) {
 	msg, err := message.Unmarshal(c.Conn)
 	return msg, err
 }

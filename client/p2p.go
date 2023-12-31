@@ -15,7 +15,7 @@ import (
 
 var (
 	// Client configurations
-	DownloadDeadline = 5 * time.Second
+	DownloadDeadline = 30 * time.Second
 	MaxBacklog       = 5
 	MaxBlockSize     = 16384
 
@@ -117,7 +117,7 @@ func (t *Torrent) startDownloadWorker(peer peer.Peer, workQueue chan *pieceWork,
 func checkWorkHash(work *pieceWork, buf []byte) error {
 	hash := sha1.Sum(buf)
 	if !bytes.Equal(hash[:], work.hash[:]) {
-		return fmt.Errorf("failed checking integirty for %v", work.index)
+		return fmt.Errorf("failed checking integrity for %v", work.index)
 	}
 
 	return nil

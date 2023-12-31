@@ -102,9 +102,6 @@ func (state *pieceState) readMessage() error {
 	if err != nil {
 		return err
 	}
-	if msg == nil {
-		return nil
-	}
 
 	// Update the state based on the message id
 	switch msg.ID {

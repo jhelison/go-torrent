@@ -27,6 +27,8 @@ const (
 type Message struct {
 	ID      MessageID
 	Payload []byte
+	Buffer  io.Reader
+	Length  uint32
 }
 
 // NewMessage returns a new message
@@ -88,69 +90,108 @@ func (m *Message) Serialize() []byte {
 }
 
 // Read generates a message from a steam
-func Unmarshal(r io.Reader) (*Message, error) {
+func Unmarshal(r io.Reader) (Message, error) {
 	lengthBuf := make([]byte, 4)
-	// Reads the first 4 bytes to get the payload lenght
+	// Reads the first 4 bytes to get the payload length
 	_, err := io.ReadFull(r, lengthBuf)
 	if err != nil {
-		return nil, err
+		return Message{}, err
 	}
 	length := binary.BigEndian.Uint32(lengthBuf)
 
 	// Keep alive
 	if length == 0 {
-		return nil, nil
+		return Message{}, nil
+	}
+
+	// Read the message ID, a single byte
+	messageIDBuf := make([]byte, 1)
+	_, err = io.ReadFull(r, messageIDBuf)
+	if err != nil {
+		return Message{}, err
+	}
+	messageID := MessageID(messageIDBuf[0])
+
+	// Special handler for Piece messages
+	// It may be too big and we don't want to allocate that much memory
+	if messageID == MsgPiece {
+		return Message{
+			ID:     messageID,
+			Buffer: r,
+			Length: length - 1,
+		}, nil
 	}
 
 	// Read the message
-	messageBuf := make([]byte, length)
+	fmt.Println(messageID, length)
+	messageBuf := make([]byte, length-1) // The length counts the message ID too
 	_, err = io.ReadFull(r, messageBuf)
 	if err != nil {
-		return nil, err
+		return Message{}, err
 	}
 
 	msg := NewMessage(
-		MessageID(messageBuf[0]),
-		messageBuf[1:],
+		messageID,
+		messageBuf[:],
 	)
 
-	return &msg, nil
+	return msg, nil
 }
 
 // ParsePiece parses and validates a piece from a index, buffer and a message
 // Checks for message type, min payload, index, offset
 // returns the
-func ParsePiece(index int, buf []byte, msg *Message) (int, error) {
+func ParsePiece(index int, buf []byte, msg Message) (int, error) {
 	// The id must be Piece
 	if msg.ID != MsgPiece {
 		return 0, fmt.Errorf("Expected PIECE (ID %d), got ID %d", MsgPiece, msg.ID)
 	}
-	// Min payload must be 8 bytes
-	if len(msg.Payload) < 8 {
-		return 0, fmt.Errorf("Payload too short. %d < 8", len(msg.Payload))
+
+	// Read the index from the buffer
+	pieceIndex := make([]byte, 4)
+	_, err := io.ReadFull(msg.Buffer, pieceIndex)
+	if err != nil {
+		return 0, err
 	}
+
 	// Check if it's the correct index
-	parsedIndex := int(binary.BigEndian.Uint32(msg.Payload[:4]))
+	parsedIndex := int(binary.BigEndian.Uint32(pieceIndex))
 	if parsedIndex != index {
 		return 0, fmt.Errorf("Expected index %d, got %d", index, parsedIndex)
 	}
+
+	// Read the index from the buffer
+	pieceOffset := make([]byte, 4)
+	_, err = io.ReadFull(msg.Buffer, pieceOffset)
+	if err != nil {
+		return 0, err
+	}
+
 	// Check if the the offset is correct
-	begin := int(binary.BigEndian.Uint32(msg.Payload[4:8]))
+	begin := int(binary.BigEndian.Uint32(pieceOffset))
 	if begin >= len(buf) {
 		return 0, fmt.Errorf("Begin offset too high. %d >= %d", begin, len(buf))
 	}
-	// Check the payload data against the offset and length
-	data := msg.Payload[8:]
-	if begin+len(data) > len(buf) {
-		return 0, fmt.Errorf("Data too long [%d] for offset %d with length %d", len(data), begin, len(buf))
+
+	// Read the data from the buffer, we can mke it go directly to our expected buf
+	pieceData := buf[begin : begin+(int(msg.Length)-8)]
+	_, err = io.ReadFull(msg.Buffer, pieceData)
+	if err != nil {
+		return 0, err
 	}
+
+	// Check the payload data against the offset and length
+	if begin+len(pieceData) > len(buf) {
+		return 0, fmt.Errorf("Data too long [%d] for offset %d with length %d", len(pieceData), begin, len(buf))
+	}
+
 	// Writes the buf to the data at offset
-	copy(buf[begin:], data)
-	return len(data), nil
+	copy(buf[begin:], pieceData)
+	return len(pieceData), nil
 }
 
 // ParseHave parses a message have, and returns the index
-func ParseHave(msg *Message) (int, error) {
+func ParseHave(msg Message) (int, error) {
 	if msg.ID != MsgHave {
 		return 0, fmt.Errorf("Expected HAVE (ID %d), got ID %d", MsgHave, msg.ID)
 	}
