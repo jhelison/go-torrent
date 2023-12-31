@@ -8,7 +8,7 @@ import (
 
 	"github.com/jackpal/bencode-go"
 
-	"go-torrent/marshallers/handshake"
+	"github.com/jhelison/go-torrent/marshallers/handshake"
 )
 
 type bencodeTorrent struct {

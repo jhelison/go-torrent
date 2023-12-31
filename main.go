@@ -1,9 +1,10 @@
 package main
 
 import (
-	"go-torrent/cmd"
 	"net/http"
 	_ "net/http/pprof"
+
+	"github.com/jhelison/go-torrent/cmd"
 )
 
 func main() {

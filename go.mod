@@ -1,4 +1,4 @@
-module go-torrent
+module github.com/jhelison/go-torrent
 
 go 1.20
 

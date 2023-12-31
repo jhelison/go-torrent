@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"go-torrent/marshallers/handshake"
+	"github.com/jhelison/go-torrent/marshallers/handshake"
 )
 
 // TorrentFile stores the basic information to handle processing

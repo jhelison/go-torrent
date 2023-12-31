@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"go-torrent/marshallers/bencode"
-	"go-torrent/marshallers/handshake"
+	"github.com/jhelison/go-torrent/marshallers/bencode"
+	"github.com/jhelison/go-torrent/marshallers/handshake"
 )
 
 // TestBuildTrackerURL tests the BuildTrackerURL

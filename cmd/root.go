@@ -2,8 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"go-torrent/logger"
 	"os"
+
+	"github.com/jhelison/go-torrent/logger"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

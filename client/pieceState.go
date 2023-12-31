@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"go-torrent/marshallers/message"
+	"github.com/jhelison/go-torrent/marshallers/message"
 
 	"github.com/spf13/viper"
 )

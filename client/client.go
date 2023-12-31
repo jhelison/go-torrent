@@ -6,9 +6,9 @@ import (
 	"net"
 	"time"
 
-	"go-torrent/marshallers/handshake"
-	"go-torrent/marshallers/message"
-	"go-torrent/marshallers/peer"
+	"github.com/jhelison/go-torrent/marshallers/handshake"
+	"github.com/jhelison/go-torrent/marshallers/message"
+	"github.com/jhelison/go-torrent/marshallers/peer"
 
 	"github.com/spf13/viper"
 )

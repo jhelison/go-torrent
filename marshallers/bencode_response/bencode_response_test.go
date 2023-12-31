@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	bencoderesponse "go-torrent/marshallers/bencode_response"
+	bencoderesponse "github.com/jhelison/go-torrent/marshallers/bencode_response"
 )
 
 // TestUnmarshal tests the unmarshal function from the bencode response module

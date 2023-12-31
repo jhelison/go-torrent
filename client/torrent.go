@@ -7,9 +7,9 @@ import (
 	_ "net/http/pprof"
 	"os"
 
-	"go-torrent/marshallers/bencode"
-	bencoderesponse "go-torrent/marshallers/bencode_response"
-	"go-torrent/marshallers/peer"
+	"github.com/jhelison/go-torrent/marshallers/bencode"
+	bencoderesponse "github.com/jhelison/go-torrent/marshallers/bencode_response"
+	"github.com/jhelison/go-torrent/marshallers/peer"
 )
 
 // TorrentFromTorrrentFile returns a torrent from a torrent file

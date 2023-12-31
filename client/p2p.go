@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"runtime"
 
-	"go-torrent/filesystem"
-	"go-torrent/logger"
-	"go-torrent/marshallers/handshake"
-	"go-torrent/marshallers/peer"
+	"github.com/jhelison/go-torrent/filesystem"
+	"github.com/jhelison/go-torrent/logger"
+	"github.com/jhelison/go-torrent/marshallers/handshake"
+	"github.com/jhelison/go-torrent/marshallers/peer"
 )
 
 var (
