@@ -1,7 +1,6 @@
 <a name="readme-top"></a>
 ![GitHub License](https://img.shields.io/github/license/jhelison/go-torrent)
 ![GitHub release (with filter)](https://img.shields.io/github/v/release/jhelison/go-torrent)
-[![LinkedIn][https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555]][https://www.linkedin.com/in/jhelison/]
 
 <br />
 <div align="center">
@@ -16,30 +15,20 @@
 
 
 <!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
-  </ol>
-</details>
+- [About The Project](#about-the-project)
+  * [Built With](#built-with)
+- [Getting Started](#getting-started)
+  * [Installation](#installation)
+    + [Downloading Binaries from GitHub Releases](#downloading-binaries-from-github-releases)
+    + [Build from source](#build-from-source)
+- [Usage](#usage)
+  * [Configuration](#configuration)
+  * [Basic Commands](#basic-commands)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
+- [Contact](#contact)
+- [Acknowledgments](#acknowledgments)
 
 
 
