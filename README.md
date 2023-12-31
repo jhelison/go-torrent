@@ -12,25 +12,14 @@
   </p>
 </div>
 
-
-
 <!-- TABLE OF CONTENTS -->
 - [About The Project](#about-the-project)
-  * [Built With](#built-with)
 - [Getting Started](#getting-started)
-  * [Installation](#installation)
-    + [Downloading Binaries from GitHub Releases](#downloading-binaries-from-github-releases)
-    + [Build from source](#build-from-source)
-- [Usage](#usage)
-  * [Configuration](#configuration)
-  * [Basic Commands](#basic-commands)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
 - [Contact](#contact)
 - [Acknowledgments](#acknowledgments)
-
-
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
