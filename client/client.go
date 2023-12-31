@@ -9,11 +9,8 @@ import (
 	"go-torrent/marshallers/handshake"
 	"go-torrent/marshallers/message"
 	"go-torrent/marshallers/peer"
-)
 
-var (
-	TimoutTime    = 3 * time.Second
-	TimoutTimeBig = 5 * time.Second
+	"github.com/spf13/viper"
 )
 
 type Client struct {
@@ -34,8 +31,11 @@ func NewClient(
 	peerID handshake.PeerID,
 	infoHash handshake.Hash,
 ) (*Client, error) {
+	// Viper config
+	timeout := viper.GetDuration("peers.timeout")
+
 	// Do the tcp dial
-	conn, err := net.DialTimeout("tcp", peer.String(), TimoutTime)
+	conn, err := net.DialTimeout("tcp", peer.String(), timeout)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,10 @@ func NewClient(
 
 // completeHandshake does a handshake with a peer
 func completeHandshake(conn net.Conn, peerID handshake.PeerID, infoHash handshake.Hash) (*handshake.Handshake, error) {
-	err := conn.SetDeadline(time.Now().Add(TimoutTime))
+	// Viper config
+	timeout := viper.GetDuration("peers.timeout")
+
+	err := conn.SetDeadline(time.Now().Add(timeout))
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +99,10 @@ func completeHandshake(conn net.Conn, peerID handshake.PeerID, infoHash handshak
 
 // recieveBitfield receives a bitfield from a peer
 func recieveBitfield(conn net.Conn) (Bitfield, error) {
-	err := conn.SetDeadline(time.Now().Add(TimoutTimeBig))
+	// Viper config
+	timeout := viper.GetDuration("peers.timeout")
+
+	err := conn.SetDeadline(time.Now().Add(timeout))
 	if err != nil {
 		return nil, err
 	}

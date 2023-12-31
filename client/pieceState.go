@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"go-torrent/marshallers/message"
+
+	"github.com/spf13/viper"
 )
 
 // pieceState is the representation of the current progress of a single piece
@@ -19,8 +21,11 @@ type pieceState struct {
 
 // processPiece process a single piece and download it
 func (state *pieceState) processPiece() error {
+	// Viper configs
+	maxRetries := viper.GetInt("peers.max_retries")
+
 	// Check if we have reached max retries
-	if state.client.retries >= 5 {
+	if state.client.retries >= maxRetries {
 		state.client.banned = true
 		return fmt.Errorf("max retries reached for peer %s", state.client.peer)
 	}
@@ -50,9 +55,13 @@ func (state *pieceState) processPiece() error {
 
 // downloadPiece download a piece from a peer
 func (state *pieceState) downloadPiece() error {
+	// Variables from configs
+	maxBlockSize := viper.GetInt("download.block_size")
+	maxBacklog := viper.GetInt("download.block_size")
+	deadline := viper.GetDuration("download.deadline")
 
 	// Set a deadline to skip stuck peers
-	err := state.client.Conn.SetDeadline(time.Now().Add(DownloadDeadline))
+	err := state.client.Conn.SetDeadline(time.Now().Add(deadline))
 	if err != nil {
 		return err
 	}
@@ -66,8 +75,8 @@ func (state *pieceState) downloadPiece() error {
 			time.Sleep(time.Second)
 		} else {
 			// We can open request messages until we reach the max backlog
-			for state.backlog < MaxBacklog && state.requested < state.work.length {
-				blockSize := MaxBlockSize
+			for state.backlog < maxBacklog && state.requested < state.work.length {
+				blockSize := maxBlockSize
 				// Last block may be shorter
 				if state.work.length-state.requested < blockSize {
 					blockSize = state.work.length - state.requested

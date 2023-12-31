@@ -26,3 +26,22 @@ func init() {
 func GetLogger() zerolog.Logger {
 	return Log
 }
+
+// SetLogLevel update the current log level
+func SetLogLevel(level string) {
+	logLevel := zerolog.TraceLevel
+	switch level {
+	case "debug":
+		logLevel = zerolog.DebugLevel
+	case "info":
+		logLevel = zerolog.InfoLevel
+	case "warn":
+		logLevel = zerolog.WarnLevel
+	case "err":
+		logLevel = zerolog.ErrorLevel
+	case "disabled":
+		logLevel = zerolog.Disabled
+	}
+
+	Log = Log.Level(logLevel)
+}

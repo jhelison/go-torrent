@@ -5,7 +5,6 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"runtime"
-	"time"
 
 	"go-torrent/filesystem"
 	"go-torrent/logger"
@@ -14,11 +13,6 @@ import (
 )
 
 var (
-	// Client configurations
-	DownloadDeadline = 30 * time.Second
-	MaxBacklog       = 10
-	MaxBlockSize     = 16384
-
 	// Default logger
 	log = logger.GetLogger()
 )
@@ -124,7 +118,7 @@ func checkWorkHash(work *pieceWork, buf []byte) error {
 }
 
 // Download downloads a torrent
-func (t *Torrent) Download() error {
+func (t *Torrent) Download(path string) error {
 	log.Info().Msg("Starting download")
 	log.Info().Msgf("Total available peers: %v", len(t.Peers))
 
