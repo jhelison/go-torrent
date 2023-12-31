@@ -122,6 +122,8 @@ func (t *Torrent) Download(path string) error {
 	log.Info().Msg("Starting download")
 	log.Info().Msgf("Total available peers: %v", len(t.Peers))
 
+	filePath := fmt.Sprintf("%s/%s", path, t.Name)
+
 	// Create a new work queue and result that are shared between peers
 	workQueue := make(chan *pieceWork, len(t.PieceHashes))
 	results := make(chan *pieceResult)
@@ -135,7 +137,7 @@ func (t *Torrent) Download(path string) error {
 	}
 
 	// Create a new file
-	file, err := filesystem.CreateFileWithSize(t.Name, int64(t.Length))
+	file, err := filesystem.CreateFileWithSize(filePath, int64(t.Length))
 	if err != nil {
 		return err
 	}
