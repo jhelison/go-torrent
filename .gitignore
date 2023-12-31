@@ -6,6 +6,8 @@ coverage.txt
 build
 
 # Vscode
-.vscode
+.vscode/**/*
 
+# Any testing iso files
+*.torrent
 *.iso
