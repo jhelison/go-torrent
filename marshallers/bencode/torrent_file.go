@@ -1,6 +1,7 @@
 package bencode
 
 import (
+	"errors"
 	"net/url"
 	"strconv"
 
@@ -22,6 +23,10 @@ type TorrentFile struct {
 // Example can be found on https://wiki.theory.org/BitTorrent_Tracker_Protocol
 // For this implementation we are always passing as no parts have been downloaded yet
 func (t *TorrentFile) BuildTrackerURL(peerID [20]byte, port uint16) (string, error) {
+	if t.Announce == "" {
+		return "", errors.New("Announce not found in selected torrent")
+	}
+
 	base, err := url.Parse(t.Announce)
 	if err != nil {
 		return "", err
