@@ -18,13 +18,14 @@ func DownloadCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			filePath := args[0]
+
 			// Check if the file exists
-			if file, err := os.Stat(filePath); os.IsNotExist(err) && !file.IsDir() {
+			if file, err := os.Stat(filePath); os.IsNotExist(err) || file.IsDir() {
 				return fmt.Errorf("Error: File does not exist: %s\n", filePath)
 			}
 
 			// Check if the output path exists
-			if file, err := os.Stat(defaultOutPath); os.IsNotExist(err) && file.IsDir() {
+			if file, err := os.Stat(defaultOutPath); os.IsNotExist(err) || !file.IsDir() {
 				return fmt.Errorf("Error: Out path does not exist: %s\n", defaultOutPath)
 			}
 
