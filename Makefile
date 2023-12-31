@@ -12,9 +12,8 @@ golangci_lint_cmd=golangci-lint
 golangci_version=v1.54.2
 
 lint:
-	@echo "--> Running linter"
-	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(golangci_version)
-	@$(golangci_lint_cmd) run --timeout=10m --out-format=tab
+	GOBIN=$(BUILDDIR) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(golangci_version)
+	$(BUILDDIR)/$(golangci_lint_cmd) run --timeout=10m --out-format=tab
 
 test:
 	go test -mod=readonly -timeout=15m -coverprofile=coverage.txt -covermode=atomic $(PACKAGES_UNIT)
@@ -30,3 +29,7 @@ build: $(BUILDDIR)/
 
 install:
 	go install
+
+###########################################################################
+###                              Releasing                              ###
+###########################################################################

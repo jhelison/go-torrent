@@ -9,9 +9,13 @@ import (
 func main() {
 	// Debugger
 	go func() {
+		// We don't really care for the error
+		//nolint:errcheck
 		http.ListenAndServe("localhost:8080", nil)
 	}()
 
 	// Run the cobra CMD
-	cmd.Execute()
+	if err := cmd.Execute(); err != nil {
+		panic(err)
+	}
 }
