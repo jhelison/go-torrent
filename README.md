@@ -162,6 +162,8 @@ Still lot's to be done!
 - [ ] Add magnetic link support
 - [ ] Add multi-torrent download
 - [ ] Improve peer management
+  - [ ] Multithread management
+  - [ ] Peers refetch and retry
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
