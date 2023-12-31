@@ -38,4 +38,4 @@ release-dry-run:
 	goreleaser release --snapshot --clean
 
 release:
-	goreleaser release
+	goreleaser release --clean
