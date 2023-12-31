@@ -13,11 +13,14 @@ func CreateFileWithSize(filename string, size int64) (*os.File, error) {
 		return file, err
 	}
 
-	// Crete the empty content for the file
-	data := make([]byte, size)
+	// Seek to the desired size minus one
+	_, err = file.Seek(size-1, 0)
+	if err != nil {
+		return file, err
+	}
 
 	// Write to the file
-	_, err = file.Write(data)
+	_, err = file.Write([]byte{0})
 	if err != nil {
 		return file, err
 	}

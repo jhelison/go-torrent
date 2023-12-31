@@ -16,7 +16,7 @@ import (
 var (
 	// Client configurations
 	DownloadDeadline = 30 * time.Second
-	MaxBacklog       = 5
+	MaxBacklog       = 10
 	MaxBlockSize     = 16384
 
 	// Default logger

@@ -123,7 +123,6 @@ func Unmarshal(r io.Reader) (Message, error) {
 	}
 
 	// Read the message
-	fmt.Println(messageID, length)
 	messageBuf := make([]byte, length-1) // The length counts the message ID too
 	_, err = io.ReadFull(r, messageBuf)
 	if err != nil {
