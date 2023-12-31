@@ -4,6 +4,7 @@ coverage.txt
 
 # Build
 build
+dist
 
 # Vscode
 .vscode/**/*

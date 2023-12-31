@@ -16,7 +16,7 @@ var (
 
 	rootCmd = &cobra.Command{
 		Use:   "go-torrent",
-		Short: "A small application to run torrent from torrent files",
+		Short: "A small application to download torrent from torrent files",
 	}
 )
 

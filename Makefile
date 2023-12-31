@@ -33,3 +33,9 @@ install:
 ###########################################################################
 ###                              Releasing                              ###
 ###########################################################################
+
+relase-dry-run:
+	goreleaser release --snapshot --clean
+
+release:
+	goreleaser releaser

@@ -168,6 +168,7 @@ go-torrent --log-level info
 
 Still lot's to be done!
 
+- [ ] Improve tests
 - [ ] Add magnetic link support
 - [ ] Add multi-torrent download
 - [ ] Improve peer management
